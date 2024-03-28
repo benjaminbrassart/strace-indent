@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-def indent_string(level) -> str:
+def indent_string(level: int) -> str:
     return level * "  "
 
-def indent_line(line) -> str:
+def indent_line(line: str) -> str:
     new_line = ""
     indent_level = 0
 
