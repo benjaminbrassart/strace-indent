@@ -57,7 +57,7 @@ def indent_line(line: str) -> str:
 
     return new_line
 
-def strace_indent_main() -> int:
+def main() -> int:
     import os
     import shutil
     import subprocess
@@ -99,4 +99,4 @@ def strace_indent_main() -> int:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 if __name__ == "__main__":
-    exit(strace_indent_main())
+    exit(main())
