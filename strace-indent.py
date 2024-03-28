@@ -79,12 +79,15 @@ def main() -> int:
         return [fifo_path, tmp_dir]
 
     (fifo_path, tmp_dir) = create_fifo()
+
     try:
         args = sys.argv[1:]
         child = subprocess.Popen(["strace", "-o", fifo_path] + args)
 
+        fd = os.open(fifo_path, os.O_RDONLY|os.O_NONBLOCK)
+
         first_line = True
-        with open(fifo_path, "r") as fifo:
+        with os.fdopen(fd) as fifo:
             while True:
                 line = fifo.readline()
 
