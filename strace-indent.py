@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
-from os import isatty
+import os
 
-if isatty(2):
+INDENT_STRING = os.environ.get("INDENT_STRING", ">---")
+
+if os.isatty(2):
     COLOR_INDENT = "\N{esc}[2;31m"
     COLOR_RESET = "\N{esc}[0m"
 else:
@@ -13,7 +15,11 @@ def indent_string(level: int) -> str:
     if level <= 0:
         return ""
 
-    return COLOR_INDENT + level * ">---" + COLOR_RESET + " "
+    s = COLOR_INDENT + level * INDENT_STRING + COLOR_RESET
+    if not INDENT_STRING.endswith(" "):
+        s += " "
+
+    return s
 
 def indent_line(line: str) -> str:
     new_line = ""
@@ -58,7 +64,6 @@ def indent_line(line: str) -> str:
     return new_line
 
 def main() -> int:
-    import os
     import shutil
     import subprocess
     import sys
