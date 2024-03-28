@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+import sys
+
+assert sys.version_info >= (3, 3), "Please upgrade to Python >= 3.3"
+
 import os
 
 INDENT_STRING = os.environ.get("INDENT_STRING", ">---")
