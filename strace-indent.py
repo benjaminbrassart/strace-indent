@@ -1,11 +1,26 @@
 #!/usr/bin/env python3
 
+from os import isatty
+
+if isatty(2):
+    COLOR_INDENT = "\N{esc}[2;31m"
+    COLOR_RESET = "\N{esc}[0m"
+else:
+    COLOR_INDENT = ""
+    COLOR_RESET = ""
+
 def indent_string(level: int) -> str:
-    return level * "  "
+    if level <= 0:
+        return ""
+
+    return COLOR_INDENT + level * ">---" + COLOR_RESET + " "
 
 def indent_line(line: str) -> str:
     new_line = ""
     indent_level = 0
+
+    if line.startswith("+++") and line.endswith("+++"):
+        return line
 
     it = iter(line)
 
@@ -37,10 +52,51 @@ def indent_line(line: str) -> str:
                 new_line += c
                 if c == "\"":
                     break
-
         else:
             new_line += c
 
     return new_line
 
-print(indent_line('sendmsg(4, {msg_name={sa_family=AF_NETLINK, nl_pid=0, nl_groups=00000000}, msg_namelen=12, msg_iov=[{iov_base=[{nlmsg_len=52, nlmsg_type=RTM_GETLINK, nlmsg_flags=NLM_F_REQUEST, nlmsg_seq=1711641587, nlmsg_pid=0}, {ifi_family=AF_UNSPEC, ifi_type=ARPHRD_NETROM, ifi_index=0, ifi_flags=0, ifi_change=0}, [[{nla_len=8, nla_type=IFLA_EXT_MASK}, RTEXT_FILTER_VF|RTEXT_FILTER_SKIP_STATS], [{nla_len=11, nla_type=IFLA_IFNAME}, "wlp2s0"]]], iov_len=52}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 52'))
+def strace_indent_main() -> int:
+    import os
+    import shutil
+    import subprocess
+    import sys
+    import tempfile
+
+    sys.stdout = sys.stderr
+
+    def create_fifo() -> tuple[str, str]:
+        tmp_dir = tempfile.mkdtemp(prefix="strace-indent-")
+        fifo_path = os.path.join(tmp_dir, "strace-output.fifo")
+
+        os.mkfifo(fifo_path)
+        return [fifo_path, tmp_dir]
+
+    (fifo_path, tmp_dir) = create_fifo()
+    try:
+        args = sys.argv[1:]
+        child = subprocess.Popen(["strace", "-o", fifo_path] + args)
+
+        first_line = True
+        with open(fifo_path, "r") as fifo:
+            while True:
+                line = fifo.readline()
+
+                if line is None or len(line) == 0:
+                    break
+
+                line = line[:-1]
+
+                if not first_line:
+                    print()
+                first_line = False
+
+                print(indent_line(line))
+
+        return child.wait()
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+if __name__ == "__main__":
+    exit(strace_indent_main())
